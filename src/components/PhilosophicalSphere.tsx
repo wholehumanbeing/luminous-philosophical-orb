@@ -1,9 +1,9 @@
-
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { getSphereRadii, philosophicalDomains } from '../utils/sacredGeometry';
+import { SacredGeometryPatterns } from './SacredGeometryPatterns';
 
 interface PhilosophicalSphereProps {
   hoveredDomain: string | null;
@@ -43,12 +43,15 @@ export const PhilosophicalSphere = ({ hoveredDomain }: PhilosophicalSphereProps)
     <group ref={sphereGroupRef}>
       {/* Eight nested spheres with golden ratio proportions */}
       {radii.map((radius, index) => (
-        <Sphere
-          key={index}
-          args={[radius, 72, 36]} // theta 72, phi 36 segments as requested
-          material={sphereMaterials[index]}
-          position={[0, 0, 0]}
-        />
+        <group key={index}>
+          <Sphere
+            args={[radius, 72, 36]} // theta 72, phi 36 segments as requested
+            material={sphereMaterials[index]}
+            position={[0, 0, 0]}
+          />
+          {/* Add sacred geometry patterns to each sphere */}
+          <SacredGeometryPatterns radius={radius} />
+        </group>
       ))}
     </group>
   );
