@@ -1,3 +1,4 @@
+
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
@@ -116,85 +117,8 @@ export const PhilosophicalSphere = ({
     }
   }, [safeProps.animationProgress, safeProps.isUnraveling, radii]);
 
-  // Compute material properties for each sphere with comprehensive error handling
-  const sphereMaterials = useMemo(() => {
-    try {
-      if (!Array.isArray(radii) || radii.length === 0) {
-        console.warn("Invalid radii array");
-        return [];
-      }
-
-      return radii.map((_, index) => {
-        try {
-          const domain = philosophicalDomains?.[index % (philosophicalDomains?.length || 1)];
-          
-          // Safe color handling with multiple fallbacks
-          let baseColor = '#ffffff'; // Ultimate fallback
-          let colorHex = 0xffffff;
-          let specularHex = 0x222222;
-          let emissiveHex = 0x111111;
-          
-          // Try to get domain color
-          if (domain && domain.color) {
-            baseColor = domain.color;
-          }
-          
-          // Color transition during animation with error handling
-          if (safeProps.isUnraveling || safeProps.isUnraveled) {
-            try {
-              const beige = new THREE.Color('#f5f5dc');
-              const turquoise = new THREE.Color('#40e0d0');
-              const gradientColor = beige.clone().lerp(turquoise, safeProps.animationProgress);
-              baseColor = `#${gradientColor.getHexString()}`;
-            } catch (error) {
-              console.error("Error creating gradient color:", error);
-              baseColor = '#40e0d0'; // Fallback to turquoise
-            }
-          }
-          
-          // Convert to safe hex numbers with error handling
-          try {
-            const baseColorObj = new THREE.Color(baseColor);
-            colorHex = baseColorObj.getHex();
-            
-            const specularColor = baseColorObj.clone().multiplyScalar(0.5);
-            specularHex = specularColor.getHex();
-            
-            const emissiveColor = baseColorObj.clone().multiplyScalar(0.1);
-            emissiveHex = emissiveColor.getHex();
-          } catch (error) {
-            console.error("Error computing material properties:", error);
-            // Use default values already set above
-          }
-          
-          return {
-            color: colorHex,
-            specular: specularHex,
-            emissive: emissiveHex,
-            transparent: true,
-            opacity: (safeProps.isUnraveling || safeProps.isUnraveled) ? 0.6 : 0.7,
-            shininess: 40
-          };
-        } catch (error) {
-          console.error(`Error creating material for sphere ${index}:`, error);
-          return {
-            color: 0xffffff,
-            specular: 0x222222,
-            emissive: 0x111111,
-            transparent: true,
-            opacity: 0.7,
-            shininess: 40
-          };
-        }
-      });
-    } catch (error) {
-      console.error("Error creating sphere materials:", error);
-      return [];
-    }
-  }, [radii, safeProps.isUnraveling, safeProps.isUnraveled, safeProps.animationProgress]);
-
   // Guard against invalid data
-  if (!Array.isArray(radii) || radii.length === 0 || !Array.isArray(sphereMaterials) || sphereMaterials.length === 0) {
+  if (!Array.isArray(radii) || radii.length === 0) {
     console.error("Failed to generate sphere data");
     return null;
   }
@@ -206,52 +130,80 @@ export const PhilosophicalSphere = ({
         // Validate radius
         const safeRadius = Math.max(0.1, Number(radius) || 1);
         
-        // Safely get material or use fallback
-        const material = sphereMaterials[index] || {
-          color: 0xffffff,
-          specular: 0x222222,
-          emissive: 0x111111,
-          transparent: true,
-          opacity: 0.7,
-          shininess: 40
-        };
+        // Compute material properties safely for each sphere
+        const domain = philosophicalDomains?.[index % (philosophicalDomains?.length || 1)];
+        
+        // Safe color computation with fallbacks
+        let baseColor = '#ffffff';
+        if (domain && domain.color) {
+          baseColor = domain.color;
+        }
+        
+        // Color transition during animation
+        if (safeProps.isUnraveling || safeProps.isUnraveled) {
+          try {
+            const beige = new THREE.Color('#f5f5dc');
+            const turquoise = new THREE.Color('#40e0d0');
+            const gradientColor = beige.clone().lerp(turquoise, safeProps.animationProgress);
+            baseColor = `#${gradientColor.getHexString()}`;
+          } catch (error) {
+            console.error("Error creating gradient color:", error);
+            baseColor = '#40e0d0';
+          }
+        }
+        
+        // Convert to safe hex numbers
+        let colorHex = 0xffffff;
+        let specularHex = 0x222222;
+        let emissiveHex = 0x111111;
         
         try {
-          return (
-            <group key={`sphere-group-${index}`}>
-              <Sphere
-                ref={(ref) => {
-                  if (ref && sphereRefs.current) {
-                    sphereRefs.current[index] = ref;
+          const baseColorObj = new THREE.Color(baseColor);
+          colorHex = baseColorObj.getHex();
+          
+          const specularColor = baseColorObj.clone().multiplyScalar(0.5);
+          specularHex = specularColor.getHex();
+          
+          const emissiveColor = baseColorObj.clone().multiplyScalar(0.1);
+          emissiveHex = emissiveColor.getHex();
+        } catch (error) {
+          console.error("Error computing material properties:", error);
+          // Use defaults already set
+        }
+        
+        const opacity = (safeProps.isUnraveling || safeProps.isUnraveled) ? 0.6 : 0.7;
+        
+        return (
+          <group key={`sphere-group-${index}`}>
+            <Sphere
+              ref={(ref) => {
+                if (ref && sphereRefs.current) {
+                  sphereRefs.current[index] = ref;
+                }
+              }}
+              args={[safeRadius, 72, 36]}
+              position={[0, 0, 0]}
+            >
+              <meshPhongMaterial
+                ref={(materialInstance) => {
+                  if (materialInstance && materialsRef.current) {
+                    materialsRef.current[index] = materialInstance;
                   }
                 }}
-                args={[safeRadius, 72, 36]}
-                position={[0, 0, 0]}
-              >
-                <meshPhongMaterial
-                  ref={(materialInstance) => {
-                    if (materialInstance && materialsRef.current) {
-                      materialsRef.current[index] = materialInstance;
-                    }
-                  }}
-                  color={material.color}
-                  specular={material.specular}
-                  emissive={material.emissive}
-                  transparent={material.transparent}
-                  opacity={material.opacity}
-                  shininess={material.shininess}
-                />
-              </Sphere>
-              {/* Add sacred geometry patterns to each sphere (hide during animation) */}
-              {!safeProps.isUnraveling && !safeProps.isUnraveled && (
-                <SacredGeometryPatterns radius={safeRadius} />
-              )}
-            </group>
-          );
-        } catch (error) {
-          console.error(`Error creating sphere ${index}:`, error);
-          return null;
-        }
+                color={colorHex}
+                specular={specularHex}
+                emissive={emissiveHex}
+                transparent={true}
+                opacity={opacity}
+                shininess={40}
+              />
+            </Sphere>
+            {/* Add sacred geometry patterns to each sphere (hide during animation) */}
+            {!safeProps.isUnraveling && !safeProps.isUnraveled && (
+              <SacredGeometryPatterns radius={safeRadius} />
+            )}
+          </group>
+        );
       })}
     </group>
   );
