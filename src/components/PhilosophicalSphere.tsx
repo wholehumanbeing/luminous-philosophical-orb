@@ -68,14 +68,15 @@ export const PhilosophicalSphere = ({
       }
       
       const baseColor = new THREE.Color(color);
+      const baseHex = baseColor.getHex();
       const specularHex = baseColor.clone().multiplyScalar(0.5).getHex();
       const emissiveHex = baseColor.clone().multiplyScalar(0.1).getHex();
       
       return {
-        color: color,
+        color: baseHex,
         transparent: true,
         opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
-        shininess: 100,
+        shininess: 40,
         specular: specularHex,
         emissive: emissiveHex
       };
