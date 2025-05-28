@@ -59,18 +59,18 @@ export const PhilosophicalSphere = ({
       const domain = philosophicalDomains[index % philosophicalDomains.length];
       
       // Color transition during animation
-      let color = domain.color;
+      let baseColor = domain.color;
       if (isUnraveling || isUnraveled) {
         const beige = new THREE.Color('#f5f5dc');
         const turquoise = new THREE.Color('#40e0d0');
         const gradientColor = beige.clone().lerp(turquoise, animationProgress);
-        color = `#${gradientColor.getHexString()}`;
+        baseColor = `#${gradientColor.getHexString()}`;
       }
       
-      const baseColor = new THREE.Color(color);
-      const baseHex = baseColor.getHex();
-      const specularHex = baseColor.clone().multiplyScalar(0.5).getHex();
-      const emissiveHex = baseColor.clone().multiplyScalar(0.1).getHex();
+      // Compute color hexes using useMemo pattern
+      const baseHex = new THREE.Color(baseColor).getHex();
+      const specularHex = new THREE.Color(baseColor).clone().multiplyScalar(0.5).getHex();
+      const emissiveHex = new THREE.Color(baseColor).clone().multiplyScalar(0.1).getHex();
       
       return {
         color: baseHex,
