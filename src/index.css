@@ -14,8 +14,8 @@
     --popover: 26 27 58;
     --popover-foreground: 230 243 255;
 
-    --primary: 212 175 55; /* Muted gold */
-    --primary-foreground: 15 15 30;
+    --primary: 26 27 58; /* Deep indigo primary */
+    --primary-foreground: 230 243 255;
 
     --secondary: 74 107 107; /* Misty teal */
     --secondary-foreground: 230 243 255;
@@ -30,10 +30,10 @@
     --destructive-foreground: 210 40% 98%;
 
     --border: 74 107 107;
-    --input: 74 107 107;
+    --input: 26 27 58; /* Deep indigo for inputs */
     --ring: 212 175 55;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 26 27 58;
     --sidebar-foreground: 230 243 255;
