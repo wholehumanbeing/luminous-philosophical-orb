@@ -53,8 +53,8 @@ export const PhilosophicalSphere = ({
     }
   }, [animationProgress, isUnraveling, radii]);
 
-  // Create sphere material properties for each sphere
-  const sphereMaterialProps = useMemo(() => {
+  // Compute base colors for each sphere
+  const baseColors = useMemo(() => {
     return radii.map((_, index) => {
       const domain = philosophicalDomains[index % philosophicalDomains.length];
       
@@ -67,21 +67,22 @@ export const PhilosophicalSphere = ({
         baseColor = `#${gradientColor.getHexString()}`;
       }
       
-      // Compute color hexes using useMemo pattern
-      const baseHex = new THREE.Color(baseColor).getHex();
-      const specularHex = new THREE.Color(baseColor).clone().multiplyScalar(0.5).getHex();
-      const emissiveHex = new THREE.Color(baseColor).clone().multiplyScalar(0.1).getHex();
-      
-      return {
-        color: baseHex,
-        transparent: true,
-        opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
-        shininess: 40,
-        specular: specularHex,
-        emissive: emissiveHex
-      };
+      return baseColor;
     });
-  }, [hoveredDomain, radii, isUnraveling, isUnraveled, animationProgress]);
+  }, [radii, isUnraveling, isUnraveled, animationProgress]);
+
+  // Compute color hexes using individual useMemo hooks
+  const baseHexes = useMemo(() => {
+    return baseColors.map(color => new THREE.Color(color).getHex());
+  }, [baseColors]);
+
+  const specularHexes = useMemo(() => {
+    return baseColors.map(color => new THREE.Color(color).clone().multiplyScalar(0.5).getHex());
+  }, [baseColors]);
+
+  const emissiveHexes = useMemo(() => {
+    return baseColors.map(color => new THREE.Color(color).clone().multiplyScalar(0.1).getHex());
+  }, [baseColors]);
 
   return (
     <group ref={sphereGroupRef}>
@@ -93,7 +94,14 @@ export const PhilosophicalSphere = ({
             args={[radius, 72, 36]}
             position={[0, 0, 0]}
           >
-            <meshPhongMaterial {...sphereMaterialProps[index]} />
+            <meshPhongMaterial
+              color={baseHexes[index] ?? 0x222222}
+              specular={specularHexes[index] ?? 0x111111}
+              emissive={emissiveHexes[index] ?? 0x000000}
+              transparent={true}
+              opacity={isUnraveling || isUnraveled ? 0.6 : 0.7}
+              shininess={40}
+            />
           </Sphere>
           {/* Add sacred geometry patterns to each sphere (hide during animation) */}
           {!isUnraveling && !isUnraveled && (
