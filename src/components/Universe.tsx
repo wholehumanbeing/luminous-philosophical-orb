@@ -8,6 +8,7 @@ import { UnravelButton } from './UnravelButton';
 import { HelixFormation } from './HelixFormation';
 import { VertexMarkers } from './VertexMarkers';
 import { PhilosopherTooltip } from './PhilosopherTooltip';
+import { PhilosopherDrawer } from './PhilosopherDrawer';
 import { TimelineSlider } from './TimelineSlider';
 import { Philosopher } from '../utils/philosopherData';
 
@@ -25,6 +26,8 @@ export const Universe = () => {
   const [isUnraveled, setIsUnraveled] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
   const [hoveredPhilosopher, setHoveredPhilosopher] = useState<Philosopher | null>(null);
+  const [selectedPhilosopher, setSelectedPhilosopher] = useState<Philosopher | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [timelineYear, setTimelineYear] = useState(2025);
   const animationRef = useRef<number>();
@@ -83,6 +86,11 @@ export const Universe = () => {
     }
   }, [isUnraveling, isUnraveled]);
 
+  const handlePhilosopherClick = (philosopher: Philosopher) => {
+    setSelectedPhilosopher(philosopher);
+    setIsDrawerOpen(true);
+  };
+
   useEffect(() => {
     return () => {
       if (animationRef.current) {
@@ -91,7 +99,6 @@ export const Universe = () => {
     };
   }, []);
 
-  // Track mouse position for tooltip
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
@@ -153,6 +160,7 @@ export const Universe = () => {
             visible={!isUnraveling && !isUnraveled}
             timelineYear={timelineYear}
             onPhilosopherHover={setHoveredPhilosopher}
+            onPhilosopherClick={handlePhilosopherClick}
           />
           
           {/* Interactive controls */}
@@ -175,6 +183,13 @@ export const Universe = () => {
       <PhilosopherTooltip
         philosopher={hoveredPhilosopher}
         mousePosition={mousePosition}
+      />
+
+      {/* Philosopher detail drawer */}
+      <PhilosopherDrawer
+        philosopher={selectedPhilosopher}
+        open={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
       />
 
       {/* Timeline slider */}

@@ -1,6 +1,6 @@
 
 import { useRef, useState } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { philosophers, Philosopher } from '../utils/philosopherData';
 
@@ -8,10 +8,10 @@ interface VertexMarkersProps {
   visible: boolean;
   timelineYear: number;
   onPhilosopherHover: (philosopher: Philosopher | null) => void;
+  onPhilosopherClick: (philosopher: Philosopher) => void;
 }
 
-export const VertexMarkers = ({ visible, timelineYear, onPhilosopherHover }: VertexMarkersProps) => {
-  const { camera, raycaster, mouse } = useThree();
+export const VertexMarkers = ({ visible, timelineYear, onPhilosopherHover, onPhilosopherClick }: VertexMarkersProps) => {
   const markersRef = useRef<THREE.Group>(null);
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
 
@@ -36,6 +36,10 @@ export const VertexMarkers = ({ visible, timelineYear, onPhilosopherHover }: Ver
     document.body.style.cursor = 'default';
   };
 
+  const handleClick = (philosopher: Philosopher) => {
+    onPhilosopherClick(philosopher);
+  };
+
   if (!visible) return null;
 
   return (
@@ -46,6 +50,7 @@ export const VertexMarkers = ({ visible, timelineYear, onPhilosopherHover }: Ver
           position={philosopher.position}
           onPointerOver={() => handlePointerOver(philosopher)}
           onPointerOut={handlePointerOut}
+          onClick={() => handleClick(philosopher)}
         >
           <sphereGeometry args={[0.3, 8, 8]} />
           <meshPhongMaterial
