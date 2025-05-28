@@ -89,6 +89,9 @@ export const PhilosophicalSphere = ({
   useEffect(() => {
     if (!safeProps.isUnraveling || sphereRefs.current.length === 0) return;
     
+    // CONSOLE LOG DEBUG: Animation useEffect trigger and inputs
+    console.log('[PhilosophicalSphere] Animation useEffect triggered. isUnraveling:', safeProps.isUnraveling, 'animationProgress:', safeProps.animationProgress, 'radii:', JSON.stringify(radii));
+
     try {
       const maxHeight = 60;
       
@@ -96,6 +99,8 @@ export const PhilosophicalSphere = ({
         if (!sphere || !sphere.position) return;
         
         try {
+          // CONSOLE LOG DEBUG: Inputs to calculateHelixPosition
+          console.log('[PhilosophicalSphere] Calculating helix position for sphere index:', index, 'radius:', radii[index], 'animationProgress:', safeProps.animationProgress, 'radii length:', radii.length, 'maxHeight:', maxHeight);
           const targetPosition = calculateHelixPosition(
             radii[index] || 1,
             index,
@@ -104,6 +109,9 @@ export const PhilosophicalSphere = ({
             maxHeight
           );
           
+          // CONSOLE LOG DEBUG: Output of calculateHelixPosition
+          console.log('[PhilosophicalSphere] Calculated targetPosition for sphere index:', index, JSON.stringify(targetPosition));
+
           if (targetPosition && typeof targetPosition.x === 'number' && !isNaN(targetPosition.x)) {
             sphere.position.lerp(targetPosition, 0.1);
           }
@@ -121,12 +129,19 @@ export const PhilosophicalSphere = ({
     try {
       if (!Array.isArray(radii) || radii.length === 0) {
         console.warn("Invalid radii array");
+        // CONSOLE LOG DEBUG: sphereMaterials memo - invalid radii
+        console.log('[PhilosophicalSphere] sphereMaterials: Invalid radii array:', JSON.stringify(radii));
         return [];
       }
+
+      // CONSOLE LOG DEBUG: sphereMaterials memo - calculation inputs
+      console.log('[PhilosophicalSphere] sphereMaterials: Calculating materials. radii:', JSON.stringify(radii), 'isUnraveling:', safeProps.isUnraveling, 'isUnraveled:', safeProps.isUnraveled, 'animationProgress:', safeProps.animationProgress);
 
       return radii.map((_, index) => {
         try {
           const domain = philosophicalDomains?.[index % (philosophicalDomains?.length || 1)];
+          // CONSOLE LOG DEBUG: sphereMaterials map - domain
+          console.log('[PhilosophicalSphere] sphereMaterials map - index:', index, 'domain:', JSON.stringify(domain));
           
           // Safe color handling with multiple fallbacks
           let baseColor = '#ffffff'; // Ultimate fallback
@@ -196,8 +211,14 @@ export const PhilosophicalSphere = ({
   // Guard against invalid data
   if (!Array.isArray(radii) || radii.length === 0 || !Array.isArray(sphereMaterials) || sphereMaterials.length === 0) {
     console.error("Failed to generate sphere data");
+    // CONSOLE LOG DEBUG: Guard triggered for invalid data
+    console.log('[PhilosophicalSphere] Guard: Failed to generate sphere data. radii:', JSON.stringify(radii), 'sphereMaterials:', JSON.stringify(sphereMaterials));
     return null;
   }
+
+  // CONSOLE LOG DEBUG: Props before main render
+  console.log('[PhilosophicalSphere] Rendering. radii:', JSON.stringify(radii));
+  console.log('[PhilosophicalSphere] Rendering. sphereMaterials:', JSON.stringify(sphereMaterials, null, 2));
 
   return (
     <group ref={sphereGroupRef}>
@@ -206,8 +227,11 @@ export const PhilosophicalSphere = ({
         // Validate radius
         const safeRadius = Math.max(0.1, Number(radius) || 1);
         
+        // CONSOLE LOG DEBUG: Inside radii.map - radius values
+        console.log('[PhilosophicalSphere] Mapping radii - index:', index, 'original radius:', radius, 'safeRadius:', safeRadius);
+
         // Safely get material or use fallback
-        const material = sphereMaterials[index] || {
+        const materialProps = sphereMaterials[index] || {
           color: 0xffffff,
           specular: 0x222222,
           emissive: 0x111111,
@@ -216,7 +240,16 @@ export const PhilosophicalSphere = ({
           shininess: 40
         };
         
+        // CONSOLE LOG DEBUG: Inside radii.map - material props
+        console.log('[PhilosophicalSphere] Mapping radii - index:', index, 'materialProps:', JSON.stringify(materialProps, null, 2));
+        
         try {
+          // CONSOLE LOG DEBUG: Props for <Sphere> and <meshPhongMaterial>
+          const sphereArgs: [number, number, number] = [safeRadius, 72, 36];
+          const spherePosition: [number, number, number] = [0,0,0]; // Assuming static position for now, or log calculated if dynamic
+          console.log('[PhilosophicalSphere] Sphere props for index', index, 'args:', JSON.stringify(sphereArgs), 'position:', JSON.stringify(spherePosition) );
+          console.log('[PhilosophicalSphere] meshPhongMaterial props for index', index, ':', JSON.stringify(materialProps, null, 2));
+
           return (
             <group key={`sphere-group-${index}`}>
               <Sphere
@@ -225,8 +258,8 @@ export const PhilosophicalSphere = ({
                     sphereRefs.current[index] = ref;
                   }
                 }}
-                args={[safeRadius, 72, 36]}
-                position={[0, 0, 0]}
+                args={sphereArgs}
+                position={spherePosition}
               >
                 <meshPhongMaterial
                   ref={(materialInstance) => {
@@ -234,12 +267,12 @@ export const PhilosophicalSphere = ({
                       materialsRef.current[index] = materialInstance;
                     }
                   }}
-                  color={material.color}
-                  specular={material.specular}
-                  emissive={material.emissive}
-                  transparent={material.transparent}
-                  opacity={material.opacity}
-                  shininess={material.shininess}
+                  color={materialProps.color}
+                  specular={materialProps.specular}
+                  emissive={materialProps.emissive}
+                  transparent={materialProps.transparent}
+                  opacity={materialProps.opacity}
+                  shininess={materialProps.shininess}
                 />
               </Sphere>
               {/* Add sacred geometry patterns to each sphere (hide during animation) */}
