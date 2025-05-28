@@ -1,4 +1,3 @@
-
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -78,15 +77,49 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
     return geometries;
   }, [radius]);
 
+  // Create materials separately to avoid recreation on each render
+  const spiralMaterial = useMemo(() => 
+    new THREE.LineBasicMaterial({ 
+      color: "#e6f3ff", 
+      transparent: true, 
+      opacity: 0.4 
+    })
+  , []);
+  
+  const pointsMaterial = useMemo(() =>
+    new THREE.PointsMaterial({
+      color: "#f8f8ff",
+      size: 0.8,
+      transparent: true,
+      opacity: 0.8,
+      sizeAttenuation: false
+    })
+  , []);
+  
+  const flowerMaterial = useMemo(() =>
+    new THREE.LineBasicMaterial({
+      color: "#d4af37",
+      transparent: true,
+      opacity: 0.15
+    })
+  , []);
+
+  // Create Three.js objects for lines directly
+  const spiralLine = useMemo(() => {
+    return new THREE.Line(spiralGeometry, spiralMaterial);
+  }, [spiralGeometry, spiralMaterial]);
+
+  const flowerLines = useMemo(() => {
+    return flowerOfLifeGeometries.map((geometry, index) => 
+      new THREE.Line(geometry, flowerMaterial)
+    );
+  }, [flowerOfLifeGeometries, flowerMaterial]);
+
   return (
     <group>
       {/* Fibonacci Spiral */}
       <group ref={spiralRef}>
-        <primitive object={new THREE.Line(spiralGeometry, new THREE.LineBasicMaterial({ 
-          color: "#e6f3ff", 
-          transparent: true, 
-          opacity: 0.4 
-        }))} />
+        <primitive object={spiralLine} />
       </group>
 
       {/* Platonic Solid Vertex Markers */}
@@ -102,15 +135,8 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
 
       {/* Flower of Life Pattern */}
       <group ref={flowerLinesRef}>
-        {flowerOfLifeGeometries.map((geometry, index) => (
-          <primitive 
-            key={index} 
-            object={new THREE.Line(geometry, new THREE.LineBasicMaterial({
-              color: "#d4af37", 
-              transparent: true, 
-              opacity: 0.15
-            }))} 
-          />
+        {flowerLines.map((line, index) => (
+          <primitive key={index} object={line} />
         ))}
       </group>
     </group>
