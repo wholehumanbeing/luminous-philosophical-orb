@@ -53,8 +53,8 @@ export const PhilosophicalSphere = ({
     }
   }, [animationProgress, isUnraveling, radii]);
 
-  // Compute base colors for each sphere
-  const baseColors = useMemo(() => {
+  // Compute material properties for each sphere with safe defaults
+  const sphereMaterials = useMemo(() => {
     return radii.map((_, index) => {
       const domain = philosophicalDomains[index % philosophicalDomains.length];
       
@@ -67,48 +67,59 @@ export const PhilosophicalSphere = ({
         baseColor = `#${gradientColor.getHexString()}`;
       }
       
-      return baseColor;
+      // Convert to safe hex numbers
+      const baseColorObj = new THREE.Color(baseColor);
+      const baseHex = baseColorObj.getHex();
+      const specularHex = baseColorObj.clone().multiplyScalar(0.5).getHex();
+      const emissiveHex = baseColorObj.clone().multiplyScalar(0.1).getHex();
+      
+      return {
+        color: baseHex,
+        specular: specularHex,
+        emissive: emissiveHex,
+        transparent: true,
+        opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
+        shininess: 40
+      };
     });
   }, [radii, isUnraveling, isUnraveled, animationProgress]);
-
-  // Compute color hexes using individual useMemo hooks
-  const baseHexes = useMemo(() => {
-    return baseColors.map(color => new THREE.Color(color).getHex());
-  }, [baseColors]);
-
-  const specularHexes = useMemo(() => {
-    return baseColors.map(color => new THREE.Color(color).clone().multiplyScalar(0.5).getHex());
-  }, [baseColors]);
-
-  const emissiveHexes = useMemo(() => {
-    return baseColors.map(color => new THREE.Color(color).clone().multiplyScalar(0.1).getHex());
-  }, [baseColors]);
 
   return (
     <group ref={sphereGroupRef}>
       {/* Eight nested spheres with golden ratio proportions */}
-      {radii.map((radius, index) => (
-        <group key={index}>
-          <Sphere
-            ref={(ref) => (sphereRefs.current[index] = ref)}
-            args={[radius, 72, 36]}
-            position={[0, 0, 0]}
-          >
-            <meshPhongMaterial
-              color={baseHexes[index] ?? 0x222222}
-              specular={specularHexes[index] ?? 0x111111}
-              emissive={emissiveHexes[index] ?? 0x000000}
-              transparent={true}
-              opacity={isUnraveling || isUnraveled ? 0.6 : 0.7}
-              shininess={40}
-            />
-          </Sphere>
-          {/* Add sacred geometry patterns to each sphere (hide during animation) */}
-          {!isUnraveling && !isUnraveled && (
-            <SacredGeometryPatterns radius={radius} />
-          )}
-        </group>
-      ))}
+      {radii.map((radius, index) => {
+        const material = sphereMaterials[index] || {
+          color: 0x222222,
+          specular: 0x111111,
+          emissive: 0x000000,
+          transparent: true,
+          opacity: 0.7,
+          shininess: 40
+        };
+        
+        return (
+          <group key={index}>
+            <Sphere
+              ref={(ref) => (sphereRefs.current[index] = ref)}
+              args={[radius, 72, 36]}
+              position={[0, 0, 0]}
+            >
+              <meshPhongMaterial
+                color={material.color}
+                specular={material.specular}
+                emissive={material.emissive}
+                transparent={material.transparent}
+                opacity={material.opacity}
+                shininess={material.shininess}
+              />
+            </Sphere>
+            {/* Add sacred geometry patterns to each sphere (hide during animation) */}
+            {!isUnraveling && !isUnraveled && (
+              <SacredGeometryPatterns radius={radius} />
+            )}
+          </group>
+        );
+      })}
     </group>
   );
 };
