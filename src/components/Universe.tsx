@@ -1,10 +1,12 @@
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useCallback, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { PhilosophicalSphere } from './PhilosophicalSphere';
 import { CosmicLighting } from './CosmicLighting';
 import { DomainOverlay } from './DomainOverlay';
+import { UnravelButton } from './UnravelButton';
+import { HelixFormation } from './HelixFormation';
 
 const LoadingFallback = () => (
   <div className="absolute inset-0 flex items-center justify-center">
@@ -16,16 +18,82 @@ const LoadingFallback = () => (
 
 export const Universe = () => {
   const [hoveredDomain, setHoveredDomain] = useState<string | null>(null);
+  const [isUnraveling, setIsUnraveling] = useState(false);
+  const [isUnraveled, setIsUnraveled] = useState(false);
+  const [animationProgress, setAnimationProgress] = useState(0);
+  const animationRef = useRef<number>();
+
+  const handleUnravel = useCallback(() => {
+    if (isUnraveling) return;
+
+    if (isUnraveled) {
+      // Restore to sphere formation
+      setIsUnraveling(true);
+      setAnimationProgress(1);
+      
+      const startTime = Date.now();
+      const duration = 5000; // 5 seconds
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Reverse the progress for restoration
+        setAnimationProgress(1 - progress);
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          setIsUnraveling(false);
+          setIsUnraveled(false);
+          setAnimationProgress(0);
+        }
+      };
+      
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      // Unravel to helix formation
+      setIsUnraveling(true);
+      setAnimationProgress(0);
+      
+      const startTime = Date.now();
+      const duration = 5000; // 5 seconds
+      
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        setAnimationProgress(progress);
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          setIsUnraveling(false);
+          setIsUnraveled(true);
+        }
+      };
+      
+      animationRef.current = requestAnimationFrame(animate);
+    }
+  }, [isUnraveling, isUnraveled]);
+
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Three.js Canvas */}
       <Canvas
         camera={{
-          position: [0, 0, 80], // Adjusted for larger spheres
+          position: [0, 0, 80],
           fov: 45,
           near: 0.1,
-          far: 2000 // Increased far plane for larger scene
+          far: 2000
         }}
         gl={{
           antialias: true,
@@ -36,7 +104,7 @@ export const Universe = () => {
         <Suspense fallback={null}>
           {/* Cosmic background */}
           <Stars
-            radius={200} // Increased for larger scene
+            radius={200}
             depth={100}
             count={2000}
             factor={4}
@@ -48,8 +116,21 @@ export const Universe = () => {
           {/* Lighting setup */}
           <CosmicLighting />
           
-          {/* Main philosophical sphere */}
-          <PhilosophicalSphere hoveredDomain={hoveredDomain} />
+          {/* Main philosophical sphere or helix formation */}
+          {isUnraveled && animationProgress === 1 ? (
+            <HelixFormation 
+              sphereCount={8} 
+              animationProgress={animationProgress}
+              maxHeight={60}
+            />
+          ) : (
+            <PhilosophicalSphere 
+              hoveredDomain={hoveredDomain}
+              isUnraveling={isUnraveling}
+              animationProgress={animationProgress}
+              isUnraveled={isUnraveled}
+            />
+          )}
           
           {/* Interactive controls */}
           <OrbitControls
@@ -59,7 +140,7 @@ export const Universe = () => {
             zoomSpeed={0.5}
             rotateSpeed={0.3}
             panSpeed={0.5}
-            minDistance={30} // Adjusted for larger spheres
+            minDistance={30}
             maxDistance={150}
             maxPolarAngle={Math.PI}
             minPolarAngle={0}
@@ -67,13 +148,22 @@ export const Universe = () => {
         </Suspense>
       </Canvas>
 
-      {/* UI Overlay */}
-      <Suspense fallback={<LoadingFallback />}>
-        <DomainOverlay
-          hoveredDomain={hoveredDomain}
-          onDomainHover={setHoveredDomain}
-        />
-      </Suspense>
+      {/* Unravel Button */}
+      <UnravelButton
+        onUnravel={handleUnravel}
+        isUnraveling={isUnraveling}
+        isUnraveled={isUnraveled}
+      />
+
+      {/* UI Overlay (hide during animation for clarity) */}
+      {!isUnraveling && !isUnraveled && (
+        <Suspense fallback={<LoadingFallback />}>
+          <DomainOverlay
+            hoveredDomain={hoveredDomain}
+            onDomainHover={setHoveredDomain}
+          />
+        </Suspense>
+      )}
 
       {/* Cosmic background effects */}
       <div className="absolute inset-0 pointer-events-none">
