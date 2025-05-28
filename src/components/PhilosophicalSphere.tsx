@@ -1,3 +1,4 @@
+
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
@@ -53,7 +54,7 @@ export const PhilosophicalSphere = ({
     if (!isUnraveling || sphereRefs.current.length === 0) return;
     
     try {
-      const maxHeight = 60; // 80% of viewport height approximation
+      const maxHeight = 60;
       
       sphereRefs.current.forEach((sphere, index) => {
         if (!sphere) return;
@@ -73,74 +74,77 @@ export const PhilosophicalSphere = ({
     }
   }, [animationProgress, isUnraveling, radii]);
 
-  // Compute material properties for each sphere with safe defaults
-  const sphereMaterials = useMemo(() => {
-    try {
-      return radii.map((_, index) => {
-        const domain = philosophicalDomains[index % philosophicalDomains.length];
-        
-        // Color transition during animation
-        let baseColor = domain?.color || '#ffffff'; // Default to white if domain color not found
-        let colorHex = 0x40e0d0; // Default turquoise hex
-        let specularHex = 0x222222;
-        let emissiveHex = 0x111111;
-        
-        if (isUnraveling || isUnraveled) {
-          try {
-            const beige = new THREE.Color('#f5f5dc');
-            const turquoise = new THREE.Color('#40e0d0');
-            const gradientColor = beige.clone().lerp(turquoise, animationProgress);
-            baseColor = `#${gradientColor.getHexString()}`;
-          } catch (error) {
-            console.error("Error creating gradient color:", error);
-            baseColor = '#40e0d0'; // Fallback to turquoise
-          }
-        }
-        
-        // Convert to safe hex numbers
+  // Compute safe material properties for each sphere
+  const materialProps = useMemo(() => {
+    console.log("Computing material props", { radii: radii.length, philosophicalDomains: philosophicalDomains.length });
+    
+    return radii.map((_, index) => {
+      // Safe domain access with fallback
+      const domain = philosophicalDomains[index % philosophicalDomains.length];
+      const baseColor = domain?.color || '#40e0d0';
+      
+      let finalColor = baseColor;
+      
+      // Handle color transition during animation
+      if (isUnraveling || isUnraveled) {
         try {
-          const baseColorObj = new THREE.Color(baseColor);
-          colorHex = baseColorObj.getHex();
-          specularHex = new THREE.Color(baseColorObj.clone().multiplyScalar(0.5).getHexString()).getHex();
-          emissiveHex = new THREE.Color(baseColorObj.clone().multiplyScalar(0.1).getHexString()).getHex();
+          const beige = new THREE.Color('#f5f5dc');
+          const turquoise = new THREE.Color('#40e0d0');
+          const gradientColor = beige.clone().lerp(turquoise, animationProgress);
+          finalColor = `#${gradientColor.getHexString()}`;
         } catch (error) {
-          console.error("Error computing material properties:", error);
-          // Use default values from above
+          console.error("Error creating gradient color:", error);
+          finalColor = '#40e0d0';
         }
-        
-        return {
-          color: colorHex,
-          specular: specularHex,
-          emissive: emissiveHex,
-          transparent: true,
-          opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
-          shininess: 40
-        };
-      });
-    } catch (error) {
-      console.error("Error creating sphere materials:", error);
-      return [];
-    }
-  }, [radii, isUnraveling, isUnraveled, animationProgress]);
+      }
+      
+      // Convert to safe hex numbers with guaranteed fallbacks
+      let colorHex = 0x40e0d0;
+      let specularHex = 0x222222;
+      let emissiveHex = 0x111111;
+      
+      try {
+        const baseColorObj = new THREE.Color(finalColor);
+        colorHex = baseColorObj.getHex();
+        specularHex = new THREE.Color(baseColorObj.clone().multiplyScalar(0.5)).getHex();
+        emissiveHex = new THREE.Color(baseColorObj.clone().multiplyScalar(0.1)).getHex();
+      } catch (error) {
+        console.error("Error computing color hex values:", error);
+        // Use safe defaults
+      }
+      
+      return {
+        color: colorHex,
+        specular: specularHex,
+        emissive: emissiveHex,
+        transparent: true,
+        opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
+        shininess: 40
+      };
+    });
+  }, [radii.length, isUnraveling, isUnraveled, animationProgress]);
 
-  if (radii.length === 0 || sphereMaterials.length === 0) {
-    console.error("Failed to generate sphere data");
+  console.log("Material props computed:", materialProps.length);
+
+  if (radii.length === 0) {
+    console.error("No radii generated");
     return null;
   }
 
   return (
     <group ref={sphereGroupRef}>
-      {/* Eight nested spheres with golden ratio proportions */}
       {radii.map((radius, index) => {
-        // Safely get material or use fallback
-        const material = sphereMaterials[index] || {
-          color: 0x222222,
-          specular: 0x111111,
-          emissive: 0x000000,
+        // Safe material access with guaranteed fallback
+        const material = materialProps[index] || {
+          color: 0x40e0d0,
+          specular: 0x222222,
+          emissive: 0x111111,
           transparent: true,
           opacity: 0.7,
           shininess: 40
         };
+        
+        console.log(`Rendering sphere ${index} with material:`, material);
         
         return (
           <group key={index}>
@@ -152,8 +156,8 @@ export const PhilosophicalSphere = ({
               position={[0, 0, 0]}
             >
               <meshPhongMaterial
-                ref={(material) => {
-                  if (material) materialsRef.current[index] = material;
+                ref={(materialRef) => {
+                  if (materialRef) materialsRef.current[index] = materialRef;
                 }}
                 color={material.color}
                 specular={material.specular}
@@ -163,7 +167,6 @@ export const PhilosophicalSphere = ({
                 shininess={material.shininess}
               />
             </Sphere>
-            {/* Add sacred geometry patterns to each sphere (hide during animation) */}
             {!isUnraveling && !isUnraveled && (
               <SacredGeometryPatterns radius={radius} />
             )}
