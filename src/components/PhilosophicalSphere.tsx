@@ -90,7 +90,7 @@ export const PhilosophicalSphere = ({
     if (!safeProps.isUnraveling || sphereRefs.current.length === 0) return;
     
     try {
-      const maxHeight = 60; // 80% of viewport height approximation
+      const maxHeight = 60;
       
       sphereRefs.current.forEach((sphere, index) => {
         if (!sphere || !sphere.position) return;
