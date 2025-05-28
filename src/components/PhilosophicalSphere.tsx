@@ -53,11 +53,10 @@ export const PhilosophicalSphere = ({
     }
   }, [animationProgress, isUnraveling, radii]);
 
-  // Create sphere materials with dynamic colors during animation
-  const sphereMaterials = useMemo(() => {
+  // Create sphere material properties for each sphere
+  const sphereMaterialProps = useMemo(() => {
     return radii.map((_, index) => {
       const domain = philosophicalDomains[index % philosophicalDomains.length];
-      const isHovered = hoveredDomain === domain.name;
       
       // Color transition during animation
       let color = domain.color;
@@ -68,15 +67,17 @@ export const PhilosophicalSphere = ({
         color = `#${gradientColor.getHexString()}`;
       }
       
-      return new THREE.MeshPhongMaterial({
+      const specularColor = new THREE.Color(color).multiplyScalar(0.5);
+      const emissiveColor = new THREE.Color(color).multiplyScalar(0.1);
+      
+      return {
         color: color,
         transparent: true,
         opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
-        side: THREE.DoubleSide,
         shininess: 100,
-        specular: new THREE.Color(color).multiplyScalar(0.5),
-        emissive: new THREE.Color(color).multiplyScalar(0.1)
-      });
+        specular: `#${specularColor.getHexString()}`,
+        emissive: `#${emissiveColor.getHexString()}`
+      };
     });
   }, [hoveredDomain, radii, isUnraveling, isUnraveled, animationProgress]);
 
@@ -88,9 +89,10 @@ export const PhilosophicalSphere = ({
           <Sphere
             ref={(ref) => (sphereRefs.current[index] = ref)}
             args={[radius, 72, 36]}
-            material={sphereMaterials[index]}
             position={[0, 0, 0]}
-          />
+          >
+            <meshPhongMaterial {...sphereMaterialProps[index]} />
+          </Sphere>
           {/* Add sacred geometry patterns to each sphere (hide during animation) */}
           {!isUnraveling && !isUnraveled && (
             <SacredGeometryPatterns radius={radius} />
