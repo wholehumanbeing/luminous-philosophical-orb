@@ -68,16 +68,16 @@ export const PhilosophicalSphere = ({
       }
       
       const baseColor = new THREE.Color(color);
-      const specularColor = baseColor.clone().multiplyScalar(0.5);
-      const emissiveColor = baseColor.clone().multiplyScalar(0.1);
+      const specularHex = baseColor.clone().multiplyScalar(0.5).getHex();
+      const emissiveHex = baseColor.clone().multiplyScalar(0.1).getHex();
       
       return {
         color: color,
         transparent: true,
         opacity: isUnraveling || isUnraveled ? 0.6 : 0.7,
         shininess: 100,
-        specular: specularColor,
-        emissive: emissiveColor
+        specular: specularHex,
+        emissive: emissiveHex
       };
     });
   }, [hoveredDomain, radii, isUnraveling, isUnraveled, animationProgress]);
