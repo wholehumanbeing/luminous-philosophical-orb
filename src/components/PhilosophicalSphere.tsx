@@ -1,9 +1,9 @@
 
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere, Ring } from '@react-three/drei';
+import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
-import { getSphereRadii, philosophicalDomains, PHI } from '../utils/sacredGeometry';
+import { getSphereRadii, philosophicalDomains } from '../utils/sacredGeometry';
 
 interface PhilosophicalSphereProps {
   hoveredDomain: string | null;
@@ -11,7 +11,7 @@ interface PhilosophicalSphereProps {
 
 export const PhilosophicalSphere = ({ hoveredDomain }: PhilosophicalSphereProps) => {
   const sphereGroupRef = useRef<THREE.Group>(null);
-  const radii = getSphereRadii(1.5);
+  const radii = getSphereRadii(10);
 
   // Gentle rotation animation
   useFrame((state) => {
@@ -21,7 +21,7 @@ export const PhilosophicalSphere = ({ hoveredDomain }: PhilosophicalSphereProps)
     }
   });
 
-  // Create sphere materials with domain-specific colors
+  // Create sphere materials with domain-specific colors and transparency
   const sphereMaterials = useMemo(() => {
     return radii.map((_, index) => {
       const domain = philosophicalDomains[index % philosophicalDomains.length];
@@ -30,63 +30,26 @@ export const PhilosophicalSphere = ({ hoveredDomain }: PhilosophicalSphereProps)
       return new THREE.MeshPhongMaterial({
         color: domain.color,
         transparent: true,
-        opacity: isHovered ? 0.4 : 0.15,
+        opacity: 0.7, // 70% opacity as requested
         side: THREE.DoubleSide,
         shininess: 100,
-        specular: new THREE.Color(domain.color).multiplyScalar(0.5)
+        specular: new THREE.Color(domain.color).multiplyScalar(0.5),
+        emissive: new THREE.Color(domain.color).multiplyScalar(0.1) // Subtle bloom effect
       });
     });
-  }, [hoveredDomain]);
+  }, [hoveredDomain, radii]);
 
   return (
     <group ref={sphereGroupRef}>
-      {/* Nested spheres with golden ratio proportions */}
+      {/* Eight nested spheres with golden ratio proportions */}
       {radii.map((radius, index) => (
         <Sphere
           key={index}
-          args={[radius, 32, 32]}
+          args={[radius, 72, 36]} // theta 72, phi 36 segments as requested
           material={sphereMaterials[index]}
           position={[0, 0, 0]}
         />
       ))}
-      
-      {/* Sacred geometry rings */}
-      <Ring
-        args={[radii[0] * 1.1, radii[0] * 1.15, 64]}
-        rotation={[Math.PI / 2, 0, 0]}
-      >
-        <meshBasicMaterial
-          color="#d4af37"
-          transparent
-          opacity={0.3}
-          side={THREE.DoubleSide}
-        />
-      </Ring>
-      
-      <Ring
-        args={[radii[1] * 1.05, radii[1] * 1.08, 32]}
-        rotation={[0, 0, 0]}
-      >
-        <meshBasicMaterial
-          color="#4a6b6b"
-          transparent
-          opacity={0.2}
-          side={THREE.DoubleSide}
-        />
-      </Ring>
-      
-      {/* Golden ratio spiral indicator */}
-      <Ring
-        args={[radii[2] * PHI, radii[2] * PHI * 1.02, 5]}
-        rotation={[Math.PI / 4, Math.PI / 4, 0]}
-      >
-        <meshBasicMaterial
-          color="#c0c0c0"
-          transparent
-          opacity={0.4}
-          side={THREE.DoubleSide}
-        />
-      </Ring>
     </group>
   );
 };

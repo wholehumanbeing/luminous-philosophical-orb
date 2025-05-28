@@ -22,10 +22,10 @@ export const Universe = () => {
       {/* Three.js Canvas */}
       <Canvas
         camera={{
-          position: [0, 0, 8],
+          position: [0, 0, 80], // Adjusted for larger spheres
           fov: 45,
           near: 0.1,
-          far: 1000
+          far: 2000 // Increased far plane for larger scene
         }}
         gl={{
           antialias: true,
@@ -36,8 +36,8 @@ export const Universe = () => {
         <Suspense fallback={null}>
           {/* Cosmic background */}
           <Stars
-            radius={100}
-            depth={50}
+            radius={200} // Increased for larger scene
+            depth={100}
             count={2000}
             factor={4}
             saturation={0.5}
@@ -59,8 +59,8 @@ export const Universe = () => {
             zoomSpeed={0.5}
             rotateSpeed={0.3}
             panSpeed={0.5}
-            minDistance={3}
-            maxDistance={15}
+            minDistance={30} // Adjusted for larger spheres
+            maxDistance={150}
             maxPolarAngle={Math.PI}
             minPolarAngle={0}
           />

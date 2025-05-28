@@ -1,17 +1,14 @@
-
 // Golden ratio and sacred geometry constants
 export const PHI = (1 + Math.sqrt(5)) / 2; // Golden ratio ≈ 1.618
 export const PHI_INVERSE = 1 / PHI; // ≈ 0.618
 
-// Calculate golden ratio based sphere radii
-export const getSphereRadii = (baseRadius: number = 2) => {
-  return [
-    baseRadius * PHI * PHI, // Outermost sphere
-    baseRadius * PHI,       // Second sphere
-    baseRadius,             // Center sphere
-    baseRadius * PHI_INVERSE, // Fourth sphere
-    baseRadius * PHI_INVERSE * PHI_INVERSE // Innermost sphere
-  ];
+// Calculate golden ratio based sphere radii - 8 nested spheres
+export const getSphereRadii = (baseRadius: number = 10) => {
+  const radii = [];
+  for (let i = 0; i < 8; i++) {
+    radii.push(baseRadius * Math.pow(PHI, i));
+  }
+  return radii;
 };
 
 // Philosophical domains with their vertical slice angles
