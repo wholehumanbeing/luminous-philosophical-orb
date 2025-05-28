@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 
 // Easing function for smooth transitions
 export const easeInOutCubic = (t: number): number => {

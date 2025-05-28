@@ -1,4 +1,3 @@
-
 import { useState, Suspense, useCallback, useRef, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
@@ -7,6 +6,10 @@ import { CosmicLighting } from './CosmicLighting';
 import { DomainOverlay } from './DomainOverlay';
 import { UnravelButton } from './UnravelButton';
 import { HelixFormation } from './HelixFormation';
+import { VertexMarkers } from './VertexMarkers';
+import { PhilosopherTooltip } from './PhilosopherTooltip';
+import { TimelineSlider } from './TimelineSlider';
+import { Philosopher } from '../utils/philosopherData';
 
 const LoadingFallback = () => (
   <div className="absolute inset-0 flex items-center justify-center">
@@ -21,6 +24,9 @@ export const Universe = () => {
   const [isUnraveling, setIsUnraveling] = useState(false);
   const [isUnraveled, setIsUnraveled] = useState(false);
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [hoveredPhilosopher, setHoveredPhilosopher] = useState<Philosopher | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [timelineYear, setTimelineYear] = useState(2025);
   const animationRef = useRef<number>();
 
   const handleUnravel = useCallback(() => {
@@ -85,6 +91,16 @@ export const Universe = () => {
     };
   }, []);
 
+  // Track mouse position for tooltip
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Three.js Canvas */}
@@ -131,6 +147,13 @@ export const Universe = () => {
               isUnraveled={isUnraveled}
             />
           )}
+
+          {/* Vertex markers for philosophers */}
+          <VertexMarkers
+            visible={!isUnraveling && !isUnraveled}
+            timelineYear={timelineYear}
+            onPhilosopherHover={setHoveredPhilosopher}
+          />
           
           {/* Interactive controls */}
           <OrbitControls
@@ -147,6 +170,19 @@ export const Universe = () => {
           />
         </Suspense>
       </Canvas>
+
+      {/* Philosopher tooltip */}
+      <PhilosopherTooltip
+        philosopher={hoveredPhilosopher}
+        mousePosition={mousePosition}
+      />
+
+      {/* Timeline slider */}
+      <TimelineSlider
+        value={timelineYear}
+        onChange={setTimelineYear}
+        visible={!isUnraveling && !isUnraveled}
+      />
 
       {/* Unravel Button */}
       <UnravelButton
