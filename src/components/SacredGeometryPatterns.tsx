@@ -21,13 +21,14 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
   });
 
   // Generate Fibonacci spiral points
-  const spiralPoints = useMemo(() => {
+  const spiralGeometry = useMemo(() => {
     const points = generateGoldenSpiral(3, 120);
-    return points.map(point => new THREE.Vector3(
+    const spiralPoints = points.map(point => new THREE.Vector3(
       point[0] * radius * 0.8,
       point[1] * radius * 0.8,
       point[2] * radius * 0.1
     ));
+    return new THREE.BufferGeometry().setFromPoints(spiralPoints);
   }, [radius]);
 
   // Generate Platonic solid vertex markers (icosahedron vertices)
@@ -44,13 +45,12 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
       v[2] * radius * 0.9 / Math.sqrt(1 + phi * phi)
     ));
     
-    const geometry = new THREE.BufferGeometry().setFromPoints(vertices);
-    return geometry;
+    return new THREE.BufferGeometry().setFromPoints(vertices);
   }, [radius]);
 
   // Generate Flower of Life pattern
-  const flowerOfLifeLines = useMemo(() => {
-    const lines = [];
+  const flowerOfLifeGeometries = useMemo(() => {
+    const geometries = [];
     const circleRadius = radius * 0.2;
     const centers = [
       [0, 0, 0],
@@ -72,28 +72,21 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
           center[2]
         ));
       }
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      lines.push(geometry);
+      geometries.push(new THREE.BufferGeometry().setFromPoints(points));
     });
 
-    return lines;
+    return geometries;
   }, [radius]);
 
   return (
     <group>
       {/* Fibonacci Spiral */}
       <group ref={spiralRef}>
-        <line>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              array={new Float32Array(spiralPoints.flatMap(p => [p.x, p.y, p.z]))}
-              count={spiralPoints.length}
-              itemSize={3}
-            />
-          </bufferGeometry>
-          <lineBasicMaterial color="#e6f3ff" transparent opacity={0.4} />
-        </line>
+        <primitive object={new THREE.Line(spiralGeometry, new THREE.LineBasicMaterial({ 
+          color: "#e6f3ff", 
+          transparent: true, 
+          opacity: 0.4 
+        }))} />
       </group>
 
       {/* Platonic Solid Vertex Markers */}
@@ -109,15 +102,15 @@ export const SacredGeometryPatterns = ({ radius }: SacredGeometryPatternsProps) 
 
       {/* Flower of Life Pattern */}
       <group ref={flowerLinesRef}>
-        {flowerOfLifeLines.map((geometry, index) => (
-          <line key={index} geometry={geometry}>
-            <lineBasicMaterial 
-              color="#d4af37" 
-              transparent 
-              opacity={0.15}
-              linewidth={1}
-            />
-          </line>
+        {flowerOfLifeGeometries.map((geometry, index) => (
+          <primitive 
+            key={index} 
+            object={new THREE.Line(geometry, new THREE.LineBasicMaterial({
+              color: "#d4af37", 
+              transparent: true, 
+              opacity: 0.15
+            }))} 
+          />
         ))}
       </group>
     </group>
